@@ -1,0 +1,59 @@
+UMCL: Universal MicroController Language
+----------------------------------------
+
+I got the idea for the UMCL from the Firmata project. I liked the concept of Firmata but not the implementation based on the MIDI protocols. I wanted something that would be a bit more user friendly even if it wasn't as efficient. Ideally, I should be able to connect to an MCU with a simple terminal emulator and issue commands as well as having a programatic API for Python and other languages.
+
+Below is the list of simple english-like commands that the UMCL should understand on most platforms.  Commands are expected to be in all upper case so the MCU doesn't have to convert the case.
+
+Note: The response from most commands with be "OK" unless otherwise specified. An error response will be "ERROR:" followed by some text describing the error.
+
+Note: In a situation where there are multiple MCUs connected to a master on the same serial interface, commands for a specific MCU may be prefixed with the ID of the target MCU followed by a colon (e.g. "99:VERSION"). Only the MCU with that ID will respond to the command.  Any commands prefixed with "0:", "00:", or with no prefix at all, will be accepted by all MCUs.
+
+
+VERSION
+Returns a version string in N.N format such as "1.4" or "2.15". This will help identify any future variations in the protocol specification.
+
+
+MCU
+Returns a string representing the type of MCU such as "ATtiny85" or "ATmega128".
+
+
+GET ID
+Returns the current ID (1-255) assigned to this MCU. If an ID has not been assigned, it will return either a hardcoded default value or a randomly generated ID.
+
+
+SET ID <NEW_ID>
+Assign a new ID (1-255) to the MCU.
+
+
+PIN COUNT
+Returns the number of pins available on the device.
+
+
+PIN <#> CAPABILITIES
+Returns a list of the specified pin's capabilities. Options include VCC, GROUND, RESET, AREF, AVCC, ANALOG, DIGITAL, PWM, TX, RX, SCL, SDA, INT.  An asterisk be appended to any of the options to indicated that the option exists, but is special or limited in some way.
+
+
+PIN <#> CONFIG [ANALOG|DIGITAL] [IN|OUT]
+Configures the specified pin to be analog or digital and in or out.
+
+
+PIN <#> CONFIG PWM
+Configures the specified pin to output a Pulse Width Modulation. The frequency depends on the microcontroller. Use the PIN SET command to set the duty cycle.
+
+
+PIN <#> CONFIG INTERRUPT <ID> [RISING|FALLING|CHANGE]
+Configures the specified pin with an interrupt on the specified event. RISING is when the pin goes from LOW to HIGH. FALLING is when the pin goes from HIGH to LOW. CHANGE will fire the interrupt whenever the state of the pin changes either way. When an interrupt is fired, it automatically sends the specified ID string back to the master. The master device will have to allow for this unsolicited incoming data. There can only be one interrupt for a pin. Configuring an interrupt, overrides any previous interrupts configured for that pin.
+
+
+PIN <#> SET [HIGH|LOW|0-255|0-100]
+Sets the state of a previously configured output pin. Digital pins should be set either HIGH or LOW. Analog pins can be set to a value from 0 and 255. PWM pins can be set to a duty cycle of 0 to 100 percent.
+
+
+PIN <#> GET
+Returns the current state of a pin. If the pin is a digital pin, it will return the strings "HIGH" or "LOW". If the pin is an analog pin, it will return a number from 0 to 255. If the pin is a PWM pin, it will return the current duty cycle from 0 to 100 percent.
+
+
+PIN <#> [DISABLE|ENABLE] INTERRUPT
+Disables or enables an interrupt that was previously configured on the specified pin.
+
