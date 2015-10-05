@@ -4,7 +4,7 @@
  * 
  * SETUP:
  * Pin 1 = (RESET)                            Pin 8 = VCC (2.7-5.5V)
- * Pin 2 = (D3)(A3) I2C Address Jumper        Pin 7 = (D2)(A1) I2C SCK
+ * Pin 2 = (D3)(A3) I2C Address Jumper        Pin 7 = (D2)(A1) I2C SCL
  * Pin 3 = (D4)(A2) PWM to motor              Pin 6 = (D1) Direction Control to Relay
  * Pin 4 = GND                                Pin 5 = (D0) I2C SDA
  *
