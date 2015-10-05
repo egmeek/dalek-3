@@ -44,12 +44,21 @@ void setup() {
 
 
 void loop() {
-    delay(100);
+    //delay(100);
 }
 
 void receive_event(int byte_count) {
-    if (Wire.available() <5) return;
-    if (Wire.read() != '{') return;
+    if (Wire.available() <5) {
+        Serial.print("DEBUG: Received event with < 5 bytes: ");
+        Serial.println(Wire.available());
+        return;
+    }
+    char start = Wire.read();
+    if (start != '{') {
+        Serial.print("DEBUG: First byte not start cmd: ");
+        Serial.println(start);
+        return;
+    }
     char cmd = Wire.read();
     if (!(cmd == 'D' || cmd == 'S')) {
         Serial.print("ERROR: Invalid command: ");
