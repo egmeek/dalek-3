@@ -37,51 +37,52 @@ void setup() {
     set_direction('B', 'F');
     
     Wire.begin(I2C_ADDRESS);
-    Wire.onReceive(receive_event);
     
     Serial.println("Setup complete");
 }
 
+int last_available = 0;
 
 void loop() {
-    //delay(100);
-}
-
-void receive_event(int byte_count) {
-    if (Wire.available() <5) {
-        Serial.print("DEBUG: Received event with < 5 bytes: ");
-        Serial.println(Wire.available());
-        return;
-    }
-    char start = Wire.read();
-    if (start != '{') {
-        Serial.print("DEBUG: First byte not start cmd: ");
-        Serial.println(start);
-        return;
-    }
-    char cmd = Wire.read();
-    if (!(cmd == 'D' || cmd == 'S')) {
-        Serial.print("ERROR: Invalid command: ");
-        Serial.println(cmd);
-        return;
-    }
-    char side = Wire.read();
-    if (!(side == 'L' || side == 'R' || side == 'B')) {
-        Serial.print("ERROR: Invalid side: ");
-        Serial.println(side);
-        return;
-    }
-    char val = Wire.read();
-    char term = Wire.read();
-    if (term != '}') {
-        Serial.print("WARNING: Invalid terminator: ");
-        Serial.println(term);
-        return;
-    }
-    if (cmd == 'D') {
-        set_direction(side, val);
+    delay(100);
+    int a = Wire.available();
+    if (a < 5) {
+        if (a != last_available) {
+            last_available = a;
+            Serial.print("DEBUG: Not enough data yet: ");
+            Serial.println(a);
+        }
     } else {
-        set_speed(side, val);
+        char start = Wire.read();
+        if (start != '{') {
+            Serial.print("DEBUG: First byte not start cmd: ");
+            Serial.println(start);
+        } else {
+            char cmd = Wire.read();
+            if (!(cmd == 'D' || cmd == 'S')) {
+                Serial.print("ERROR: Invalid command: ");
+                Serial.println(cmd);
+            } else {
+                char side = Wire.read();
+                if (!(side == 'L' || side == 'R' || side == 'B')) {
+                    Serial.print("ERROR: Invalid side: ");
+                    Serial.println(side);
+                } else {
+                    char val = Wire.read();
+                    char term = Wire.read();
+                    if (term != '}') {
+                        Serial.print("WARNING: Invalid terminator: ");
+                        Serial.println(term);
+                    } else {
+                        if (cmd == 'D') {
+                            set_direction(side, val);
+                        } 
+                            set_speed(side, val);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
