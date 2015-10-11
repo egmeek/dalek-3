@@ -8,15 +8,16 @@
  *
  * NOTE: changing direction always changes the speed to 0 to protect motor and other components.
  *
+ * NOTE: One really nice feature of the Energia+MSP430 is it uses the physical pin numbers.
  */
 
 #include <Wire.h>
 
-#define LEFT_PWM_PIN        6       // Physical Pin 12
-#define RIGHT_PWM_PIN      11       // Physical Pin 17
+#define LEFT_PWM_PIN        9
+#define RIGHT_PWM_PIN      12
 
-#define LEFT_DIR_PIN        7       // Physical Pin 13
-#define RIGHT_DIR_PIN      10       // Physical Pin 16
+#define LEFT_DIR_PIN       10
+#define RIGHT_DIR_PIN      11
                                     
 #define I2C_ADDRESS        77       // ASCII 'M'
 
