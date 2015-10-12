@@ -11,7 +11,7 @@ from smbus import SMBus
 MOTOR_CONTROLLER_ADDRESS = 0x4d	 # aka 77 or 'M'
 
 WHICH = 'LRB'  # Left, Right or Both
-DIR = 'FB'  # Forward or Backward
+DIR = 'FR'  # Forward or Backward
 
 
 bus = SMBus(1)

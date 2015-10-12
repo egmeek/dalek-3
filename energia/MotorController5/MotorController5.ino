@@ -25,8 +25,8 @@
 char left_current_dir  = 'F';
 char right_current_dir = 'F';
 
-char cmd[4] = "";
-int i = 0;
+volatile char cmd[4] = "";
+volatile int i = 0;
 
 void setup() {
     Serial.begin(9600);
@@ -40,8 +40,11 @@ void setup() {
     set_speed("SB0");
     set_direction("DBF");
     
+    BCSCTL1 = CALBC1_16MHZ;                   
+    DCOCTL = CALDCO_16MHZ;
+    
     Wire.begin(I2C_ADDRESS);
-//    Wire.onReceive(receive_event);
+    Wire.onReceive(receive_event);
     
     Serial.println("Setup complete");
 }
@@ -49,8 +52,13 @@ void setup() {
 
 void loop() {
     delay(100);  // give it a little time to load the command bytes
+}
+
+void receive_event(int num_bytes) {
     while (Wire.available() > 0) {
         cmd[i++] = Wire.read();
+        Serial.print("INFO: Read char from Wire: ");
+        Serial.println(cmd[i-1]);
         switch(i) {
             case 1:
                 if (!(cmd[0] == 'D' || cmd[0] == 'S')) {
@@ -68,11 +76,11 @@ void loop() {
                 break;
             case 3:
                 Serial.print("INFO: Received command: ");
-                Serial.println(cmd);
+                Serial.println((char*)cmd);
                 if (cmd[0] == 'D') {
-                    set_direction(cmd);
+                    set_direction((char*)cmd);
                 } else if (cmd[0] == 'S') {
-                    set_speed(cmd);
+                    set_speed((char*)cmd);
                 } else {
                     Serial.print("ERROR: Somehow we got to the end with an invalid command: ");
                     Serial.println(cmd[0]);
@@ -82,6 +90,7 @@ void loop() {
             default:
                 Serial.print("ERROR: value of i should never be ");
                 Serial.println(i);
+                cmd[3] = 0;
                 i = 0;
                 break;
         }

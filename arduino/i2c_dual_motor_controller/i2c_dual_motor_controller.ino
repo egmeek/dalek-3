@@ -13,16 +13,21 @@
 #include <Wire.h>
 
 #define LEFT_PWM_PIN        6       // Physical Pin 12
-#define RIGHT_PWM_PIN      11       // Physical Pin 17
-
 #define LEFT_DIR_PIN        7       // Physical Pin 13
+#define RIGHT_PWM_PIN      11       // Physical Pin 17
 #define RIGHT_DIR_PIN      10       // Physical Pin 16
                                     
-#define I2C_ADDRESS        77       // ASCII 'M'
-
+#define I2C_ADDRESS        77       // ASCII 'M'  0x4d
 
 char left_current_dir  = 'F';
 char right_current_dir = 'F';
+
+volatile char cmd[4] = "";
+volatile int i = 0;
+
+#define CMD    cmd[0]
+#define WCH    cmd[1]
+#define VAL    cmd[2]
 
 void setup() {
     Serial.begin(9600);
@@ -33,8 +38,8 @@ void setup() {
     pinMode(LEFT_DIR_PIN, OUTPUT);
     pinMode(RIGHT_DIR_PIN, OUTPUT);
     
-    set_speed('B', '0');
-    set_direction('B', 'F');
+    set_speed("SB0");
+    set_direction("DBF");
     
     Wire.begin(I2C_ADDRESS);
     Wire.onReceive(receive_event);
@@ -47,82 +52,108 @@ void loop() {
     delay(100);
 }
 
-void receive_event(int byte_count) {
-    Serial.println("receive_event");
-    if (Wire.available() <5) {
-        Serial.print("DEBUG: Received event with < 5 bytes: ");
-        Serial.println(Wire.available());
-        return;
+void receive_event(int num_bytes) {
+    while (Wire.available() > 0) {
+        cmd[i++] = Wire.read();
+        Serial.print("INFO: Read char from Wire: ");
+        Serial.println(cmd[i-1]);
+        switch(i) {
+            case 1:
+                if (!(CMD == 'D' || CMD == 'S')) {
+                    Serial.print("ERROR: Invalid command: ");
+                    Serial.println(CMD);
+                    i = 0;
+                }
+                break;
+            case 2:
+                if (!(WCH == 'L' || WCH == 'R' || WCH == 'B')) {
+                    Serial.print("ERROR: Invalid side: ");
+                    Serial.println(WCH);
+                    i = 0;
+                }
+                break;
+            case 3:
+                Serial.print("INFO: Received command: ");
+                Serial.println((char*)cmd);
+                if (CMD == 'D') {
+                    set_direction((char*)cmd);
+                } else if (CMD == 'S') {
+                    set_speed((char*)cmd);
+                } else {
+                    Serial.print("ERROR: Somehow we got to the end with an invalid command: ");
+                    Serial.println(CMD);
+                }
+                i = 0;
+                break;
+            default:
+                Serial.print("ERROR: value of i should never be ");
+                Serial.println(i);
+                cmd[3] = 0;
+                i = 0;
+                break;
+        }
     }
-    char start = Wire.read();
-    if (start != '{') {
-        Serial.print("DEBUG: First byte not start cmd: ");
-        Serial.println(start);
-        return;
-    }
-    char cmd = Wire.read();
-    if (!(cmd == 'D' || cmd == 'S')) {
+}
+
+
+void set_direction(char* cmd) {
+    if (CMD != 'D') {
         Serial.print("ERROR: Invalid command: ");
-        Serial.println(cmd);
+        Serial.println(CMD);
         return;
     }
-    char side = Wire.read();
-    if (!(side == 'L' || side == 'R' || side == 'B')) {
+    if (!(WCH == 'L' || WCH == 'R' || WCH == 'B')) {
         Serial.print("ERROR: Invalid side: ");
-        Serial.println(side);
+        Serial.println(WCH);
         return;
     }
-    char val = Wire.read();
-    char term = Wire.read();
-    if (term != '}') {
-        Serial.print("WARNING: Invalid terminator: ");
-        Serial.println(term);
-        return;
-    }
-    if (cmd == 'D') {
-        set_direction(side, val);
-    } else {
-        set_speed(side, val);
-    }
-}
-
-
-void set_direction(char side, char val) {
-    if (!(val == 'F' || val == 'R')) {
+    if (!(VAL == 'F' || VAL == 'R')) {
         Serial.print("ERROR: Invalid direction value: ");
-        Serial.println(val);
+        Serial.println(VAL);
         return;
     }
-    if (side == 'L' || side == 'B') {
-        if (left_current_dir != val) set_speed('L', '0');
+    if (WCH == 'L' || WCH == 'B') {
+        if (left_current_dir != VAL) set_speed("SL0");
         Serial.print("INFO: Setting left direction: ");
-        Serial.println(val == 'F' ? "FORWARD" : "REVERSE");
-        digitalWrite(LEFT_DIR_PIN, val == 'F' ? LOW : HIGH);
-        left_current_dir = val;
+        Serial.println(VAL == 'F' ? "FORWARD" : "REVERSE");
+        digitalWrite(LEFT_DIR_PIN, (VAL == 'F' ? LOW : HIGH));
+        left_current_dir = VAL;
     }
-    if (side == 'R' || side == 'B') {
-        if (right_current_dir != val) set_speed('R', '0');
+    if (WCH == 'R' || WCH == 'B') {
+        if (right_current_dir != VAL) set_speed("SR0");
         Serial.print("INFO: Setting right direction: ");
-        Serial.println(val == 'F' ? "FORWARD" : "REVERSE");
-        digitalWrite(RIGHT_DIR_PIN, val == 'F' ? LOW : HIGH);
-        right_current_dir = val;
+        Serial.println(VAL == 'F' ? "FORWARD" : "REVERSE");
+        digitalWrite(RIGHT_DIR_PIN, (VAL == 'F' ? LOW : HIGH));
+        right_current_dir = VAL;
     }
 }
 
 
-void set_speed(char side, char val) {
-    if (val < 48 && val > 58) {
-        Serial.print("ERROR: Invalid speed value: ");
-        Serial.println(val);
+void set_speed(char* cmd) {
+    if (CMD != 'S') {
+        Serial.print("ERROR: Invalid command: ");
+        Serial.println(CMD);
         return;
     }
-    int duty_cycle = 127 * (val - 48) / 10;
-    if (side == 'L' || side == 'B') {
+    if (!(WCH == 'L' || WCH == 'R' || WCH == 'B')) {
+        Serial.print("ERROR: Invalid side: ");
+        Serial.println(WCH);
+        return;
+    }
+    if (VAL < 48 || VAL > 58) {
+        Serial.print("ERROR: Invalid speed value: ");
+        Serial.println(VAL);
+        return;
+    }
+    
+    int duty_cycle = 127 * (VAL - 48) / 10;
+    
+    if (WCH == 'L' || WCH == 'B') {
         Serial.print("INFO: Setting left duty cycle: ");
         Serial.println(duty_cycle);
         analogWrite(LEFT_PWM_PIN, duty_cycle);
     }
-    if (side == 'R' || side == 'B') {
+    if (WCH == 'R' || WCH == 'B') {
         Serial.print("INFO: Setting right duty cycle: ");
         Serial.println(duty_cycle);
         analogWrite(RIGHT_PWM_PIN, duty_cycle);
