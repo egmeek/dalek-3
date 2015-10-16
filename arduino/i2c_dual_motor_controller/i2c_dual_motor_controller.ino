@@ -12,10 +12,12 @@
 
 #include <Wire.h>
 
+// pins 5 & 6 have higher frequency than the other PWM pins so we want to use them
 #define LEFT_PWM_PIN        6       // Physical Pin 12
-#define LEFT_DIR_PIN        7       // Physical Pin 13
-#define RIGHT_PWM_PIN      11       // Physical Pin 17
-#define RIGHT_DIR_PIN      10       // Physical Pin 16
+#define RIGHT_PWM_PIN       5       // Physical Pin 11
+
+#define LEFT_DIR_PIN       12       // Physical Pin 18
+#define RIGHT_DIR_PIN      13       // Physical Pin 19
                                     
 #define I2C_ADDRESS        77       // ASCII 'M'  0x4d
 
