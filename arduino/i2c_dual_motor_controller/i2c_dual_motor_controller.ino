@@ -146,7 +146,7 @@ void set_speed(char* cmd) {
         return;
     }
     
-    int duty_cycle = 127 * (VAL - 48) / 10;
+    int duty_cycle = 255 * (VAL - 48) / 10;
     
     if (WCH == 'L' || WCH == 'B') {
         Serial.print("INFO: Setting left duty cycle: ");
