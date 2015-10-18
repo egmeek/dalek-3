@@ -28,6 +28,8 @@ bus = SMBus(1)
 def direction(w, d):
     if w[0] in WHICH and d[0] in DIR:
         bus.write_i2c_block_data(MOTOR_CONTROLLER_ADDRESS, ord(DIRECTION), [ord(w[0]), ord(d[0])])
+    else:
+        raise Exception("Invalid values")
 
 
 def speed(w, n):
