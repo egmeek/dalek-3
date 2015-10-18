@@ -57,8 +57,8 @@ void loop() {
 void receive_event(int num_bytes) {
     while (Wire.available() > 0) {
         cmd[i++] = Wire.read();
-        Serial.print("INFO: Read char from Wire: ");
-        Serial.println(cmd[i-1]);
+        //Serial.print("INFO: Read char from Wire: ");
+        //Serial.println(cmd[i-1]);
         switch(i) {
             case 1:
                 if (!(CMD == 'D' || CMD == 'S')) {
