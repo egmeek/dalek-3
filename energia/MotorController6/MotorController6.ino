@@ -1,103 +1,71 @@
-/* I2C Dual Motor Controller
+/****************************************************************
+ * MotorController6
  * by Ron Smith
  * Copyright 2015 That Ain't Working, All Rights Reserved
- * 
- * COMMANDS:
- * "{D[L|R|B][F|R]}"    Sets direction for Left|Right|Both motors to Forward|Reverse
- * "{S[L|R|B][0-9]}"    Sets speed for Left|Right|Both motors to 0-9 (equates to duty cycle 0-90%)
- *
- * NOTE: changing direction always changes the speed to 0 to protect motor and other components.
- *
- */
+ ****************************************************************/
 
 #include <Wire.h>
 
-#define LEFT_PWM_PIN       P2_1       // Physical Pin 9
-#define RIGHT_PWM_PIN      P2_2       // Physical Pin 10
+#define LEFT_PWM_PIN        6       // Physical Pin 12
+#define RIGHT_PWM_PIN       5       // Physical Pin 11
 
-#define LEFT_DIR_PIN       P1_5       // Physical Pin 7
-#define RIGHT_DIR_PIN      P2_0       // Physical Pin 8
+#define LEFT_DIR_PIN       12       // Physical Pin 18
+#define RIGHT_DIR_PIN      13       // Physical Pin 19
                                     
-#define I2C_ADDRESS        77         // ASCII 'M'  0x4d
+#define I2C_ADDRESS        77       // ASCII 'M'  0x4d
+
+#define CMD buf[0]
+#define WCH buf[1]
+#define VAL buf[2]
 
 char left_current_dir  = 'F';
 char right_current_dir = 'F';
 
 volatile char cmd[4] = "";
-volatile int i = 0;
 
-#define CMD    cmd[0]
-#define WCH    cmd[1]
-#define VAL    cmd[2]
-
-
+/****************************************************************
+ *
+ ****************************************************************/
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600);           // start serial for output
   Serial.println("Setup begin");
   
   pinMode(LEFT_PWM_PIN, OUTPUT);
   pinMode(RIGHT_PWM_PIN, OUTPUT);
   pinMode(LEFT_DIR_PIN, OUTPUT);
-  pinMode(RIGHT_DIR_PIN, OUTPUT);  
-
+  pinMode(RIGHT_DIR_PIN, OUTPUT);
+  
   set_speed("SB0");
   set_direction("DBF");
+
+  memset((void*)cmd, 0, 4);
   
   Wire.begin(I2C_ADDRESS);
-  Wire.onReceive(receive_event);
+  Wire.onReceive(receiveEvent);
   
   Serial.println("Setup complete");
 }
 
-void loop() {
-  delay(100);
-}
 
-void receive_event(int num_bytes) {
-    while (Wire.available() > 0) {
-        cmd[i++] = Wire.read();
-        //Serial.print("INFO: Read char from Wire: ");
-        //Serial.println(cmd[i-1]);
-        switch(i) {
-            case 1:
-                if (!(CMD == 'D' || CMD == 'S')) {
-                    Serial.print("ERROR: Invalid command: ");
-                    Serial.println(CMD);
-                    i = 0;
-                }
-                break;
-            case 2:
-                if (!(WCH == 'L' || WCH == 'R' || WCH == 'B')) {
-                    Serial.print("ERROR: Invalid side: ");
-                    Serial.println(WCH);
-                    i = 0;
-                }
-                break;
-            case 3:
-                Serial.print("INFO: Received command: ");
-                Serial.println((char*)cmd);
-                if (CMD == 'D') {
-                    set_direction((char*)cmd);
-                } else if (CMD == 'S') {
-                    set_speed((char*)cmd);
-                } else {
-                    Serial.print("ERROR: Somehow we got to the end with an invalid command: ");
-                    Serial.println(CMD);
-                }
-                i = 0;
-                break;
-            default:
-                Serial.print("ERROR: value of i should never be ");
-                Serial.println(i);
-                cmd[3] = 0;
-                i = 0;
-                break;
-        }
+/****************************************************************
+ *
+ ****************************************************************/
+void receiveEvent(int howMany) {
+  int i = 0;
+  char c;
+  while(Wire.available() > 0) {
+    c = Wire.read();
+    if (i < 4) {
+      cmd[i++] = c;
     }
+  }
 }
 
 
-void set_direction(char* cmd) {
+/****************************************************************
+ *
+ ****************************************************************/
+void set_direction(char* buf) {
     if (CMD != 'D') {
         Serial.print("ERROR: Invalid command: ");
         Serial.println(CMD);
@@ -130,7 +98,10 @@ void set_direction(char* cmd) {
 }
 
 
-void set_speed(char* cmd) {
+/****************************************************************
+ *
+ ****************************************************************/
+void set_speed(char* buf) {
     if (CMD != 'S') {
         Serial.print("ERROR: Invalid command: ");
         Serial.println(CMD);
@@ -159,5 +130,32 @@ void set_speed(char* cmd) {
         Serial.println(duty_cycle);
         analogWrite(RIGHT_PWM_PIN, duty_cycle);
     }
+}
+
+
+/****************************************************************
+ *
+ ****************************************************************/
+void loop() {
+  char buf[4] = "";
+  if (cmd[0]) {
+    // gotta get the data out of the cmd buffer before the next interrupt if possible
+    memcpy((void*)buf, (void*)cmd, 4);
+    memset((void*)cmd, 0, 4);
+    
+    Serial.print("Received command: ");
+    Serial.println((char*)buf);
+    
+    if (CMD == 'D') {
+      set_direction((char*)buf);
+    } else if (CMD == 'S') {
+      set_speed((char*)buf);
+    } else {
+      Serial.print("Invalid command");
+      Serial.println((char*)buf);
+    }
+  } else {
+    delay(100);
+  }
 }
 
