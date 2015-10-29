@@ -6,13 +6,13 @@
 
 #include <Wire.h>
 
-#define LEFT_PWM_PIN        6       // Physical Pin 12
-#define RIGHT_PWM_PIN       5       // Physical Pin 11
+#define LEFT_PWM_PIN        P2_1       // Physical Pin 9
+#define RIGHT_PWM_PIN       P2_2       // Physical Pin 10
 
-#define LEFT_DIR_PIN       12       // Physical Pin 18
-#define RIGHT_DIR_PIN      13       // Physical Pin 19
-                                    
-#define I2C_ADDRESS        77       // ASCII 'M'  0x4d
+#define LEFT_DIR_PIN        P1_5       // Physical Pin 7
+#define RIGHT_DIR_PIN       P2_0       // Physical Pin 98
+
+#define I2C_ADDRESS         77         // ASCII 'M'  0x4d
 
 #define CMD buf[0]
 #define WCH buf[1]
