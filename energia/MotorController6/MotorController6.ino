@@ -30,6 +30,8 @@ void setup() {
   Serial.begin(9600);           // start serial for output
   Serial.println("Setup begin");
   
+  analogFrequency(244);
+  
   pinMode(LEFT_PWM_PIN, OUTPUT);
   pinMode(RIGHT_PWM_PIN, OUTPUT);
   pinMode(LEFT_DIR_PIN, OUTPUT);
